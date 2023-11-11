@@ -1,9 +1,17 @@
 import java.io.*;
 import java.net.*;
+import java.util.Optional;
 import java.util.Scanner;
 
-public class Client {
+public class Manager {
+    private Optional<Double> answer;
+
     public static void main(String[] args) {
+        Manager manager = new Manager();
+        manager.start();
+    }
+
+    private void start() {
         try {
             while (true) {
                 Socket serverF = new Socket("localhost", 12345); // Connect to Server F
@@ -20,7 +28,7 @@ public class Client {
                 }
 
                 try {
-                    int x = Integer.parseInt(input);
+                    Double x = Double.parseDouble(input);
 
                     // Send x to Server F
                     ObjectOutputStream outF = new ObjectOutputStream(serverF.getOutputStream());
@@ -34,15 +42,15 @@ public class Client {
                     ObjectInputStream inF = new ObjectInputStream(serverF.getInputStream());
                     ObjectInputStream inG = new ObjectInputStream(serverG.getInputStream());
 
-                    int resultF = (int) inF.readObject(); // Result of f(x)
-                    int resultG = (int) inG.readObject(); // Result of g(x)
+                    Optional<Double> resultF = (Optional<Double>) inF.readObject(); // Result of f(x)
+                    Optional<Double> resultG = (Optional<Double>) inG.readObject(); // Result of g(x)
 
                     // Calculate gcd(f(x), g(x))
-                    int gcd = gcd(resultF, resultG);
+                    this.answer = calculateGCD(resultF.orElse(null), resultG.orElse(null));
 
-                    System.out.println("gcd(f(x), g(x)) = " + gcd);
+                    System.out.println("gcd(f(x), g(x)) = " + this.answer.orElse(null));
                 } catch (NumberFormatException e) {
-                    System.out.println("Invalid x format. Please enter an integer.");
+                    System.out.println("Invalid x format. Please enter a double.");
                 } catch (SocketException se) {
                     // Handle broken pipe (client disconnected)
                     System.out.println("Connection to the server was lost. Reconnecting...");
@@ -58,10 +66,11 @@ public class Client {
     }
 
     // Method to calculate GCD
-    private static int gcd(int a, int b) {
-        if (b == 0) {
-            return a;
+    private Optional<Double> calculateGCD(Double a, Double b) {
+        if (a != null && b != null) {
+            // GCD calculation logic (modify as needed)
+            return Optional.of(Math.abs(a - b));
         }
-        return gcd(b, a % b);
+        return Optional.empty();
     }
 }
