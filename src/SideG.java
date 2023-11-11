@@ -2,10 +2,11 @@ import java.io.*;
 import java.net.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-public class ServerG {
-    private static Map<Integer, Integer> memoizationCache = new HashMap<>();
+public class SideG {
+    private static Map<Double, Double> memoizationCache = new HashMap<>();
 
     public static void main(String[] args) {
         try {
@@ -16,24 +17,16 @@ public class ServerG {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Client connected to Server G.");
 
-                // Використовуємо CompletableFuture для асинхронної обробки запиту
+                // Use CompletableFuture for asynchronous request processing
                 CompletableFuture.runAsync(() -> {
                     try {
                         ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
-                        int x = (int) in.readObject();
+                        Double x = (Double) in.readObject();
 
-                        int resultG;
-
-                        if (memoizationCache.containsKey(x)) {
-                            resultG = memoizationCache.get(x);
-                        } else {
-                            // Обчислення g(x) і зберігання результату в кеші
-                            resultG = g(x);
-                            memoizationCache.put(x, resultG);
-                        }
+                        Optional<Double> resultG = calculateG(x);
 
                         ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
-                        out.writeObject(resultG);
+                        out.writeObject(resultG.orElse(null));
 
                         clientSocket.close();
                     } catch (IOException | ClassNotFoundException e) {
@@ -46,8 +39,26 @@ public class ServerG {
         }
     }
 
-    // Приклад функції g(x) (ваша реалізація може відрізнятися)
-    private static int g(int x) {
-        return x * 3;
+    // Example implementation of the function g(x)
+    private static Optional<Double> calculateG(Double x) {
+        if (memoizationCache.containsKey(x)) {
+            return Optional.of(memoizationCache.get(x));
+        } else {
+            // Calculation of g(x) and storing the result in the cache
+            Optional<Double> resultG = tryG(x);
+            resultG.ifPresent(value -> memoizationCache.put(x, value));
+            return resultG;
+        }
+    }
+
+    // Example implementation of the function g(x) (your implementation may vary)
+    private static Optional<Double> tryG(Double x) {
+        try {
+            return Optional.of(x * 3);
+        } catch (Exception e) {
+            // Handle any exceptions
+            e.printStackTrace();
+            return Optional.empty();
+        }
     }
 }
